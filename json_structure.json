@@ -1,0 +1,9 @@
+{"command": {
+    "alias": ["1", "2"],
+    "timed": {
+      "enabled": true,
+      "increment": 1000
+    },
+    "text": "some text with {keywords}"
+  }
+}

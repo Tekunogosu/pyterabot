@@ -5,3 +5,7 @@ import os
 
 def now():
     return datetime.datetime.now()
+
+
+def vv(x):
+    print(vars(x))

@@ -1,0 +1,25 @@
+{
+  "hi": {
+    "alias": ["hello", "hey"],
+    "text": "I SAID HEY {author.name}!! WHATS GOING ON"
+  },
+  "pokemon": {
+    "alias": ["poke"],
+    "text": "this is a pokemon"
+  },
+  "cmds": {
+    "alias": ["chatcommands", "cc"],
+    "text": "Registered commands are: {commands}"
+  },
+  "pat": {
+    "alias": ["pats"],
+    "vars": {
+      "regex": [
+        ["<varName>","<pattern>"],
+        ["<varName>", "<pattern>"]
+      ],
+      "someothervar": "some other value"
+    },
+    "text": "/me gently pats {<varName>}"
+  }
+}
