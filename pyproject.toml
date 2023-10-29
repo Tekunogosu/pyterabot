@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "pyterabot"
+version = "0.1.0"
+description = ""
+authors = ["tekunogosu <tera.hallows@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+twitchio = "*"
+sqlalchemy = "*"
+python-dotenv = "*"
+#spotipy = "2.23.0"
+spotipy = "^2.23.0"
+
+
+[tool.poetry.group.dev.dependencies]
+python = "^3.11"
+twitchio = "*"
+sqlalchemy = "*"
+python-dotenv = "*"
+#spotipy = "2.23.0"
+#spotipy = {path = "spotipy", develop = true}
+ipdb = "*"
+ipython = "*"
+spotipy = {path = "spotipy", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

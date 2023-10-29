@@ -2,3 +2,5 @@
 __pychache__
 .env
 .cache
+__pycache__
+spotipy/
