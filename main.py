@@ -13,9 +13,6 @@ from twitchio import Channel, User, Message, Client
 from twitchio.ext import commands, routines, eventsub
 from twitchio.ext.commands import Command, Context
 
-from spotipy.client import Spotify as Spotipy
-from spotipy.oauth2 import SpotifyOAuth
-
 
 from dotenv import load_dotenv
 
@@ -35,59 +32,6 @@ logger.setLevel(level=logging.DEBUG)
 load_dotenv(f'{os.getcwd()}/.env')
 
 
-class Spotify(Spotipy):
-    next_song_info_time: float
-    current_song_info: str
-    def __init__(self):
-        super().__init__(oauth_manager=SpotifyOAuth(
-            redirect_uri='http://localhost:9180',
-            scope=[
-                'user-read-currently-playing',
-                'user-read-playback-state',
-            ],
-        ))
-        self.next_song_info_time = 0.0
-        self.current_song_info = ''
-
-    def get_current_song_str(self, force_response:bool=False) -> str:
-        """
-        implement force_response
-        needed test cases:
-        * no song playing (and hasn't in a while so the api call will not return a current song)
-        """
-        if self.next_song_info_time > 0 and time.time() < self.next_song_info_time:
-            remaining = self.next_song_info_time - time.time()
-            return f"{self.current_song_info} - Ends in {remaining//60:.0f}:{remaining%60//1:>02.0f} seconds"
-            # logger.warning(f"called too soon; wait until current song ends in {remaining:.1f} seconds")
-            # return self.current_song_info if force_response else ''
-
-        #TODO:separate function
-        pb = None
-        try:
-            pb = self.current_playback()
-        except Exception as e1:
-            time.sleep(1)
-            try:
-                pb = self.current_playback()
-            except Exception as e2:
-                logger.exception('Failed to get current playback information from spotify twice in a row; errors:\n%s\n%s', e1, e2)
-        if not pb:
-            logger.error("failed to get current playback info from spotify API")
-            return ''
-
-        duration_ms = pb['item']['duration_ms']
-        progress_ms = pb['progress_ms']
-        remaining_ms = duration_ms - progress_ms
-        remaining_seconds = remaining_ms / 1000
-        self.next_song_info_time = time.time() + remaining_seconds
-
-        song_name = pb['item']['name']
-        artists_str = ', '.join(a['name'] for a in pb['item']['artists'])
-        full_str = f'{song_name} - {artists_str}'
-        self.current_song_info = full_str
-        remaining = remaining_seconds
-        return f"{self.current_song_info} - Ends in {remaining//60:.0f}:{remaining%60//1:>02.0f}"
-
 
 class TeraBot(commands.Bot):
 
@@ -95,13 +39,12 @@ class TeraBot(commands.Bot):
     inbox: Queue
     outbox: Queue
 
-    def __init__(self, inbox:Queue, outbox:Queue, spotify: Spotify, commands_file: Optional[str] = None):
+    def __init__(self, inbox:Queue, outbox:Queue, commands_file: Optional[str] = None):
         super().__init__(
             token=getenv('TWITCH_TOKEN'),
             prefix='!',
             initial_channels=[getenv('TWITCH_CHANNEL')],
         )
-        self.spotify = spotify
         self.inbox = inbox
         self.outbox = outbox
         logger.debug("loading commands :D")
@@ -251,14 +194,6 @@ class TeraBot(commands.Bot):
         # time based reminders
         print(ctx.message.content)
 
-    @commands.command(name="song")
-    async def song(self, ctx: Context):
-        song_str = self.spotify.get_current_song_str()
-        print("SONG STRING", song_str)
-        if not song_str:
-            await ctx.send("Failed to get info from Spotify API")
-            return
-        await ctx.send(song_str)
 
     # setup !pat in commands.json
     @commands.command(name="t")
@@ -275,13 +210,11 @@ class TeraBot(commands.Bot):
 
 def main():
     commands_json_filepath = os.path.abspath(os.path.join(os.curdir, 'commands.json'))
-    # https://developer.spotify.com/documentation/web-api/concepts/scopes
-    spotify = Spotify()
 
     # print(f"{commands_json_filepath}")
     to_bot = Queue()
     from_bot = Queue()
-    twitch_bot = TeraBot(to_bot, from_bot, spotify, commands_json_filepath)
+    twitch_bot = TeraBot(to_bot, from_bot, commands_json_filepath)
 
     bot_thread = threading.Thread(target=twitch_bot.run, daemon=True)
     bot_thread.start()
